@@ -1,0 +1,129 @@
+v<!DOCTYPE html>
+<html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Vue Lab</title>
+    <link
+   rel="stylesheet"    href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+   integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+   crossorigin="anonymous"/>
+   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+  <div class="container">
+   <div id="app">
+     <p>Number of stops to show: <input v-model.number="numStops" type="number" value="10" min="0" max="10"></p>
+     <ol v-if="stops && stops.length > 0"> <li v-for="x in filteredStops">
+          <div class="card" style="width: 18rem;">
+          <div class="card-body">
+          <h5 class="card-title">{{x.name}}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{x.description}}</h6>
+           <p class="card-text">{{x.distance}} km</p>
+          </div>
+          </div>
+          </li> </ol>
+   </div>
+</div>
+ <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+ <script
+     src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+     integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+     crossorigin="anonymous"
+   ></script>
+   <script
+     src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+     crossorigin="anonymous"
+   ></script>
+   <script>
+   const app = new Vue({
+  el: '#app',
+
+
+  data: {
+    message: 'Hello Vue!',
+    stops: [],
+    numStops: 10,
+    latitude: 0,
+    longitude: 0
+
+  },
+
+    mounted: function()
+  {
+    fetch('https://utils.pauliankline.com/stops.json')
+    .then(res => res.json())
+    .then(response => this.stops=response)
+    .catch(error => console.error('Error:', error));
+
+    let watchID = navigator.geolocation.watchPosition((position) => {
+          this.latitude=position.coords.latitude;
+          this.longitude=position.coords.longitude;
+          console.log("check");
+          for(let stop of this.stops)
+          {
+            stop.distance=this.getDistanceFromLatLonInKm(this.latitude, this.longitude, stop.lat, stop.lon);
+          }
+     });
+  },
+
+  methods:
+  {
+     //  deg2rad: (deg) =>
+     // {
+     //   return deg * (Math.PI/180);
+     // },
+
+    getDistanceFromLatLonInKm: (lat1,lon1,lat2,lon2) =>
+    {
+      let R = 6371; // Radius of the earth in km
+      let dLat = (lat2-lat1)* (Math.PI/180);
+      let dLon = (lon2-lon1)* (Math.PI/180);
+      let a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos((lat1)* (Math.PI/180)) * Math.cos((lat2)* (Math.PI/180)) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+      let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      let d = R * c; // Distance in km
+      return d;
+    }
+  },
+
+
+   computed:
+   {
+     filteredStops:  function() {
+       let temparr=[];
+       let temparr1=[];
+       let min_index=0;
+       let mybool=false;
+
+       for(let stop of this.stops)
+       {
+         temparr1.push(stop);
+       }
+
+       for(let i=0 ; i<this.numStops; i++)
+      {
+        min_index=0;
+       for(let j=1; j<temparr1.length; j++)
+       {
+         if(temparr1[min_index].distance > temparr1[j].distance)
+         {
+            min_index=j;
+         }
+       }
+        temparr.push(temparr1[min_index]);
+        temparr1.splice(min_index, 1);
+     }
+       return(temparr);
+     }
+   }
+
+    })
+  </script>
+  </body>
+</html>
